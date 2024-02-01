@@ -1,0 +1,168 @@
+from tkinter import ttk
+import tkinter as tk
+import ast
+import time
+
+
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        # Устанавливаем параметры окна
+        width = 500   # ширина окна
+        height = 400  # высота окна
+        # вычисляем координаты начала окна относительно максимальной длины и ширины экрана
+        x = int((self.winfo_screenwidth() - width) / 2)
+        y = int((self.winfo_screenheight() - height) / 2)
+        # Задаём геометрию окна
+        self.wm_geometry("%dx%d+%d+%d" % (width, height, x, y))
+        # Устанавливаем название окна
+        self.title('Сортировщик чисел')
+        # Делаем размеры окна неизменяемыми
+        self.resizable(0, 0)
+        # Вызываем функцию установки дочерних фреймов на это окно
+        self.put_frames()
+
+    # Создаём фреймы основного окна
+    def put_frames(self):
+        self.main_panel = MainPanel(self)
+        self.test_panel = TestPanel(self)
+
+class MainPanel(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Указываем размещение нашего фрейма на главном окне
+        self.place(x=0, y=0, width=500, height=280)
+        # Конфигурируем сетку
+        self.columnconfigure((0), weight=1, uniform='a')
+        self.rowconfigure((0, 1, 2, 3, 4, 5, 6, 7, 8), weight=1, uniform='a')
+        # Создаём рамку этого фрейма
+        self['bd'] = 1
+        self['relief'] = 'solid'
+        # Вызываем функцию установки виджетов на это окно
+        self.put_widgets()
+
+
+    def put_widgets(self):
+        self.sort_reverse = False
+        self.time_to_sort = 0
+        # Выводим информационную строку
+        self.label1 = ttk.Label(self, text='Введите последовательность чисел через запятую:', foreground='black',
+                                font=("Arial", 12))
+        self.label1.grid(row=0, column=0, sticky='s')
+        # Выводим виджет Entry для ввода последовательности чисел
+        self.entry_val = ttk.Entry(self, justify='center', font=("Arial", 12))
+        self.entry_val.insert(0,'Например: 1,53,-5,44.12,93')
+        self.entry_val.grid(row=1, column=0, sticky='nswe', padx=15)
+        # Создаём виджет со списком
+        self.var = tk.StringVar()
+        self.combobox = ttk.Combobox(self, textvariable=self.var, font=("Arial", 10))
+        self.combobox['values'] = ('Сортировка по возрастанию', 'Сортировка по убыванию')
+        self.combobox['state'] = 'readonly'
+        self.combobox.current(0)
+        self.combobox.grid(row=2, column=0, sticky='nswe', padx=150, pady=5)
+        # Устанавливаем трассировку для данной переменной
+        self.var.trace('w', self.callback)
+        # Создаём кнопку старта сортировки
+        self.button = tk.Button(self, text='СТАРТ', background='#006600', foreground='white', command=self.start_sort,
+                                width=20, font=("Arial", 12))
+        self.button.grid(row=3, column=0, sticky='ns')
+        # Выводим информационную строку
+        self.label2 = ttk.Label(self, text='Результат:', font=("Arial", 12))
+        self.label2.grid(row=4, column=0, sticky='s')
+        # Выводим информационную строку
+        self.label3 = ttk.Label(self, text='', font=("Arial", 12), anchor='c', background='#FFFFFF',
+                                borderwidth=2, relief="solid", wraplength=480)
+        self.label3.grid(row=5, column=0, sticky='nswe', padx=15, pady=5, rowspan=2)
+        self.label4 = ttk.Label(self, text='Время затраченное на сортировку:', font=("Arial", 12))
+        self.label4.grid(row=7, column=0, sticky='s')
+        self.label5 = ttk.Label(self, text=f'{self.time_to_sort} мс', font=("Arial", 12))
+        self.label5.grid(row=8, column=0, sticky='n')
+
+    def callback(self, *args):    # Функция обработки виджета со списком
+        self.sort_reverse = bool(self.combobox.current())
+
+    def start_sort(self):  # Функция сортировки
+        self.start_time = time.time()     # Засекам начальное время выполнения функции сортировки
+        self.str = self.entry_val.get()   # Определяем переменной self.str значение поля entry
+        if len(self.str) < 100:           # Задаём максимальную длину строки для последовательности
+            # Проверяем на правильность ввода
+            try:
+                # Используем модуль ast для преобразования строки с запятыми в список чисел
+                self.list = list(ast.literal_eval(self.str))
+                self.list.sort(reverse=self.sort_reverse)       # Сортируем список
+                self.label3.config(text=str(self.list)[1:-1])   # Выводим полученный список, исключая квадратные скобки
+                self.label1.config(text='Введите последовательность чисел через запятую:', foreground='black')
+                time.sleep(.1)    # Добавляем паузу, иначе в расчёте всегда по 0
+                self.end_time = time.time()   # Засекам конечное время выполнения функции сортировки
+                # Вычисляем время выполнения функции сортировки удаляя .1 секунду, для правильности
+                self.time_to_sort = (self.end_time - self.start_time - .1) * 1000
+                # Выводим время выполнения
+                self.label5.config(text=f'{self.time_to_sort} мс')
+
+            except:
+                self.label1.config(text='Неверный ввод, попробуйте ещё раз', foreground='red')
+        else:
+            self.label1.config(text='Слишком длинная последовательность, попробуйте ещё раз', foreground='red')
+
+
+
+class TestPanel(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Указываем размещение нашего фрейма на главном окне
+        self.place(x=0, y=280, width=500, height=120)
+        # Конфигурируем сетку
+        self.columnconfigure((0, 1, 2), weight=1, uniform='a')
+        self.rowconfigure((0, 1, 2, 3), weight=1, uniform='a')
+        # Создаём рамку этого фрейма
+        self['bd'] = 1
+        self['relief'] = 'solid'
+        # Вызываем функцию установки виджетов на это окно
+        self.put_widgets()
+    def put_widgets(self):
+        # Выводим информационную строку
+        self.label1 = ttk.Label(self, text='Тестирование программы стандартными библиотеками',
+                                font=("Arial", 12))
+        self.label1.grid(row=0, column=0, columnspan=3, sticky='s')
+        # Создаём кнопку старта тестирования
+        self.button = tk.Button(self, text='Запустить тест', background='#9999FF', foreground='white',
+                                command=self.start_test, width=20, font=("Arial", 12))
+        self.button.grid(row=1, column=0, columnspan=3, sticky='ns')
+        # Выводим информационную строку
+        self.label2 = ttk.Label(self, text='Результат:', font=("Arial", 12))
+        self.label2.grid(row=2, column=0, columnspan=3, sticky='s')
+
+
+    def start_test(self):
+        assert (self.start_testing('1,4,2')) == [1, 2, 4]
+        self.label3 = ttk.Label(self, text='Тест №1 пройден', background='#99FF99',
+                                anchor='c', font=("Arial", 10))
+        self.label3.grid(row=3, column=0, sticky='nswe', padx=5, pady=5)
+
+        assert (self.start_testing('-44,1323.55,22,99')) == [-44, 22, 99, 1323.55]
+        self.label3 = ttk.Label(self, text='Тест №2 пройден', background='#99FF99',
+                                anchor='c', font=("Arial", 10))
+        self.label3.grid(row=3, column=1, sticky='nswe', padx=5, pady=5)
+
+        assert (self.start_testing('dfgf,1323.55,22,99')) == ('Ошибка ввода')
+        self.label3 = ttk.Label(self, text='Тест №3 пройден', background='#99FF99',
+                                anchor='c', font=("Arial", 10))
+        self.label3.grid(row=3, column=2, sticky='nswe', padx=5, pady=5)
+
+
+    def start_testing(self, str_entry):  # Функция сортировки
+        try:
+            self.str = str_entry  # Определяем переменной self.str значение поля entry
+            # Используем модуль ast для преобразования строки с запятыми в список чисел
+            self.list = list(ast.literal_eval(self.str))
+            self.list.sort(reverse=False)  # Сортируем список
+            return self.list
+        except:
+            return 'Ошибка ввода'
+
+
+
+
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
