@@ -101,7 +101,7 @@ class MainPanel(tk.Frame):
             self.label1.config(text='Слишком длинная последовательность, попробуйте ещё раз', foreground='red')
             return
 
-        self.start_time = time.time()  # Засекам начальное время выполнения функции сортировки
+        self.start_time = time.perf_counter()  # Засекам начальное время выполнения функции сортировки
         if self.sort_method_index == 0:
             self.sorted_list = bubble_sort(self.new_list)
         if self.sort_method_index == 1:
@@ -112,10 +112,9 @@ class MainPanel(tk.Frame):
             self.sorted_list = merge_sort(self.new_list)
         if self.sort_method_index == 4:
             self.sorted_list = bubble_sort(self.new_list)
-        time.sleep(.1)
-        self.end_time = time.time()  # Засекам конечное время выполнения функции сортировки
+        self.end_time = time.perf_counter()  # Засекам конечное время выполнения функции сортировки
         # Вычисляем время выполнения функции сортировки
-        self.time_to_sort = (self.end_time - self.start_time - .1) * 1000
+        self.time_to_sort = (self.end_time - self.start_time) * 1000
         self.label1.config(text='Введите последовательность чисел через запятую:', foreground='black')
         self.label3.config(text=str(self.sorted_list)[1:-1])  # Выводим полученный список, исключая квадратные скобки
         self.label5.config(text=f'{self.time_to_sort} мс')  # Выводим время выполнения
@@ -137,7 +136,7 @@ class TestPanel(tk.Frame):
 
     def put_widgets(self):
         # Выводим информационную строку
-        self.label1 = ttk.Label(self, text='Тестирование программы стандартными библиотеками',
+        self.label1 = ttk.Label(self, text='Тестирование логики программы стандартными библиотеками',
                                 font=("Arial", 12))
         self.label1.grid(row=0, column=0, columnspan=3, sticky='s')
         # Создаём кнопку старта тестирования
